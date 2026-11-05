@@ -1,5 +1,4 @@
 import type { Locale } from '../models/settings';
-import { notImplemented } from '../not-implemented';
 
 export const SPEED_LEVEL_MIN = 1;
 export const SPEED_LEVEL_MAX = 10;
@@ -22,35 +21,60 @@ export interface SpeedContext {
 }
 
 /** 夹到 [MIN, MAX] 并吸附到 STEP。 */
-export function clampSpeedLevel(_level: number): number {
-  return notImplemented('speedModel.clampSpeedLevel');
+export function clampSpeedLevel(level: number): number {
+  if (!Number.isFinite(level)) return SPEED_LEVEL_DEFAULT;
+  const snapped = Math.round(level / SPEED_LEVEL_STEP) * SPEED_LEVEL_STEP;
+  return Math.min(SPEED_LEVEL_MAX, Math.max(SPEED_LEVEL_MIN, snapped));
 }
 
 /** 档位 → 阅读单位/分钟，与档位成正比。 */
-export function levelToUnitsPerMinute(_level: number, _locale: Locale): number {
-  return notImplemented('speedModel.levelToUnitsPerMinute');
+export function levelToUnitsPerMinute(level: number, locale: Locale): number {
+  return (UNITS_PER_MINUTE_AT_DEFAULT_LEVEL[locale] * level) / SPEED_LEVEL_DEFAULT;
 }
 
-/** 统计阅读单位：CJK 每字 1 个，拉丁文每词 1 个，忽略空白与标点。 */
-export function countReadingUnits(_text: string, _locale: Locale): number {
-  return notImplemented('speedModel.countReadingUnits');
+const CJK = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u;
+const WORD_CHAR = /[\p{L}\p{N}]/u;
+
+/** 统计阅读单位：CJK 每字 1 个，拉丁文每词 1 个，忽略空白与标点。单次扫描。 */
+export function countReadingUnits(text: string, _locale: Locale): number {
+  let units = 0;
+  let inWord = false;
+  for (const ch of text) {
+    if (CJK.test(ch)) {
+      units += 1;
+      inWord = false;
+    } else if (WORD_CHAR.test(ch)) {
+      if (!inWord) units += 1;
+      inWord = true;
+    } else {
+      inWord = false;
+    }
+  }
+  return units;
+}
+
+function totalReadingSec(readingUnits: number, level: number, locale: Locale): number {
+  return (readingUnits / levelToUnitsPerMinute(level, locale)) * 60;
 }
 
 /** 核心公式：px/s = contentHeightPx ÷ 总阅读秒数。readingUnits 为 0 时返回 0。 */
-export function toPxPerSec(_level: number, _context: SpeedContext): number {
-  return notImplemented('speedModel.toPxPerSec');
+export function toPxPerSec(level: number, context: SpeedContext): number {
+  if (context.readingUnits <= 0 || context.contentHeightPx <= 0) return 0;
+  return context.contentHeightPx / totalReadingSec(context.readingUnits, level, context.locale);
 }
 
 /** 编辑区底部的预估时长，不依赖布局。 */
-export function estimateReadingMs(_readingUnits: number, _level: number, _locale: Locale): number {
-  return notImplemented('speedModel.estimateReadingMs');
+export function estimateReadingMs(readingUnits: number, level: number, locale: Locale): number {
+  if (readingUnits <= 0) return 0;
+  return totalReadingSec(readingUnits, level, locale) * 1000;
 }
 
 /** (contentHeightPx − positionPx) ÷ speed；速度为 0 时返回 null。 */
 export function estimateRemainingMs(
-  _contentHeightPx: number,
-  _positionPx: number,
-  _speedPxPerSec: number,
+  contentHeightPx: number,
+  positionPx: number,
+  speedPxPerSec: number,
 ): number | null {
-  return notImplemented('speedModel.estimateRemainingMs');
+  if (!(speedPxPerSec > 0)) return null;
+  return Math.max(0, ((contentHeightPx - positionPx) / speedPxPerSec) * 1000);
 }

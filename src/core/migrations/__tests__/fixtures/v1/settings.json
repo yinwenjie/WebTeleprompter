@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "appearance": {
+    "fontSizePx": 56,
+    "lineHeight": 1.6,
+    "fontFamily": "serif",
+    "fgColor": "#ffffff",
+    "bgColor": "#000000",
+    "preset": "black-white",
+    "paddingXPercent": 10
+  },
+  "display": {
+    "mirrorX": true,
+    "mirrorY": false,
+    "guide": { "style": "line", "positionPercent": 40, "opacity": 0.5 },
+    "showProgressInClean": false
+  },
+  "playback": { "speedLevel": 4.5, "countdownSec": 5, "resumeDelayMs": 300 },
+  "locale": "zh-CN"
+}

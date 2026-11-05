@@ -1,0 +1,11 @@
+{
+  "id": "6b1f2c3e-1d2a-4b5c-8d9e-0f1a2b3c4d5e",
+  "title": "v1 夹具",
+  "content": "第一段\n\n第二段",
+  "createdAt": 1700000000000,
+  "updatedAt": 1700000100000,
+  "lastPositionPx": 120,
+  "lastProgress": 0.25,
+  "charCount": 6,
+  "schemaVersion": 1
+}

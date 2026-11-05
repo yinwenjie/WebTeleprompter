@@ -1,4 +1,3 @@
-import { notImplemented } from '../not-implemented';
 import type { Result } from './result';
 
 export const SCRIPT_SCHEMA_VERSION = 1 as const;
@@ -26,24 +25,75 @@ export interface NewScriptInput {
   now: number;
 }
 
-export function createScript(_input: NewScriptInput): Script {
-  return notImplemented('models.createScript');
+/** 非空白字符的码点数，emoji 算一个。 */
+export function countChars(text: string): number {
+  let count = 0;
+  for (const ch of text) {
+    if (!/\s/u.test(ch)) count += 1;
+  }
+  return count;
+}
+
+export function createScript(input: NewScriptInput): Script {
+  return {
+    id: input.id,
+    title: input.title,
+    content: input.content,
+    createdAt: input.now,
+    updatedAt: input.now,
+    lastPositionPx: 0,
+    lastProgress: 0,
+    charCount: countChars(input.content),
+    schemaVersion: SCRIPT_SCHEMA_VERSION,
+  };
 }
 
 /** 返回内容更新后的新稿件：同步 charCount 与 updatedAt。 */
-export function withContent(_script: Script, _content: string, _now: number): Script {
-  return notImplemented('models.withContent');
+export function withContent(script: Script, content: string, now: number): Script {
+  return { ...script, content, charCount: countChars(content), updatedAt: now };
+}
+
+function finiteOr(value: unknown, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 }
 
 /** 校验任意来源的数据（存储、导入文件），缺失字段用默认值补齐。手写校验，不引入 zod。D-14 */
-export function validateScript(_raw: unknown): Result<Script> {
-  return notImplemented('models.validateScript');
+export function validateScript(raw: unknown): Result<Script> {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+    return { ok: false, reason: 'not-an-object' };
+  }
+  const r = raw as Record<string, unknown>;
+  if (typeof r.id !== 'string' || r.id.length === 0) return { ok: false, reason: 'missing-id' };
+  if (typeof r.content !== 'string') return { ok: false, reason: 'missing-content' };
+  const progress = finiteOr(r.lastProgress, 0);
+  return {
+    ok: true,
+    value: {
+      id: r.id,
+      title: typeof r.title === 'string' ? r.title : '',
+      content: r.content,
+      createdAt: finiteOr(r.createdAt, 0),
+      updatedAt: finiteOr(r.updatedAt, 0),
+      lastPositionPx: Math.max(0, finiteOr(r.lastPositionPx, 0)),
+      lastProgress: Math.min(1, Math.max(0, progress)),
+      charCount: countChars(r.content),
+      schemaVersion: SCRIPT_SCHEMA_VERSION,
+    },
+  };
 }
 
 /**
  * 段落切分规则（D-16）：以空行分段；若全文没有空行但有换行，则每个非空行算一段。
  * UI 渲染、段落跳转、字数统计都复用它，保证段落数量一致。
  */
-export function splitParagraphs(_content: string): string[] {
-  return notImplemented('models.splitParagraphs');
+export function splitParagraphs(content: string): string[] {
+  const normalized = content.replace(/\r\n?/g, '\n');
+  const blocks = normalized
+    .split(/\n(?:[^\S\n]*\n)+/)
+    .map((block) => block.replace(/^\n+|\n+$/g, ''))
+    .filter((block) => block.trim().length > 0);
+  if (blocks.length === 1 && blocks[0]!.includes('\n')) {
+    return blocks[0]!.split('\n').filter((line) => line.trim().length > 0);
+  }
+  return blocks;
 }

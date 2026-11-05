@@ -1,5 +1,3 @@
-import { notImplemented } from '../not-implemented';
-
 export type AppMode = 'edit' | 'prompt';
 
 /** 显示类命令不经状态机，由 PlaybackEffects.onDisplayCommand 转交（D-04、D-07）。 */
@@ -30,7 +28,47 @@ export type PlaybackCommand =
 
 export type CommandSource = 'keyboard' | 'button' | 'gesture' | 'remote' | 'voice' | 'system';
 
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
 /** 校验不可信来源（远程消息等）的命令结构，P1 的 RemoteTransport 必须经过它。 */
-export function isPlaybackCommand(_value: unknown): _value is PlaybackCommand {
-  return notImplemented('commands.isPlaybackCommand');
+export function isPlaybackCommand(value: unknown): value is PlaybackCommand {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+  const v = value as Record<string, unknown>;
+  const type = v.type as PlaybackCommand['type'];
+  switch (type) {
+    case 'toggle':
+    case 'play':
+    case 'pause':
+    case 'seek.top':
+    case 'scrub.begin':
+    case 'scrub.end':
+    case 'display.toggleFullscreen':
+    case 'display.exitFullscreen':
+    case 'display.toggleClean':
+    case 'display.toggleHelp':
+      return true;
+    case 'speed.step':
+      return isFiniteNumber(v.delta);
+    case 'speed.set':
+      return isFiniteNumber(v.level);
+    case 'seek.paragraph':
+      return v.dir === 1 || v.dir === -1;
+    case 'seek.px':
+      return isFiniteNumber(v.positionPx);
+    case 'seek.progress':
+      return isFiniteNumber(v.progress);
+    case 'nudge.px':
+      return isFiniteNumber(v.deltaPx);
+    case 'mode.set':
+      return v.mode === 'edit' || v.mode === 'prompt';
+    case 'display.toggleMirror':
+      return v.axis === 'x' || v.axis === 'y';
+    default: {
+      const exhaustive: never = type;
+      void exhaustive;
+      return false;
+    }
+  }
 }
