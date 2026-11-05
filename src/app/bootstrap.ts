@@ -27,14 +27,11 @@ import { createScriptStore } from '@/state/scriptStore';
 import { createSettingsStore } from '@/state/settingsStore';
 import type { StageBridge } from '@/state/stageBridge';
 import { bindRootStyles } from './rootStyles';
-import { createStepRunner } from './stepRunner';
 
 export interface AppContainer {
   stores: AppStores;
   /** 接通所有订阅与输入，返回停止函数。 */
   start(): () => void;
-  /** 骨架期用：尚未实现而被跳过的启动步骤。 */
-  unimplementedSteps: readonly string[];
 }
 
 /**
@@ -43,8 +40,6 @@ export interface AppContainer {
  * 规格见 docs/dev/modules/app-shell.md
  */
 export function createContainer(root: HTMLElement): AppContainer {
-  const steps = createStepRunner();
-
   // —— platform 基础能力 ——
   const clock = new BrowserClock();
   const scheduler = new RafScheduler();
@@ -56,7 +51,7 @@ export function createContainer(root: HTMLElement): AppContainer {
 
   // —— 设置最先就绪：控制器的初始语速和首屏样式都依赖它 ——
   const settings = createSettingsStore({ repository: new LocalSettingsRepository() });
-  steps.run('settings.hydrate', () => settings.getState().hydrate());
+  settings.getState().hydrate();
 
   const display = createDisplayStore({ fullscreen, wakeLock, clock });
   const scripts = createScriptStore({
@@ -134,68 +129,73 @@ export function createContainer(root: HTMLElement): AppContainer {
   };
 
   const start = (): (() => void) => {
-    steps.run('rootStyles', () => bindRootStyles(root, settings, display));
-    steps.run('playbackStore.connect', () =>
-      connectPlaybackStore(playback, { controller, engine }),
-    );
+    const cleanups: Array<() => void> = [];
+    const track = (cleanup: () => void) => cleanups.push(cleanup);
 
-    steps.run('bus.editModeInterceptor', () =>
-      bus.use(createEditModeInterceptor(() => controller.getState().mode)),
-    );
+    track(bindRootStyles(root, settings, display));
+    track(connectPlaybackStore(playback, { controller, engine }));
+    track(bus.use(createEditModeInterceptor(() => controller.getState().mode)));
 
-    steps.run('input.keyboard', () => keyboard.attach());
-    steps.run('input.activity', () => activity.onActivity(() => display.getState().noteActivity()));
+    track(keyboard.attach());
+    track(activity.onActivity(() => display.getState().noteActivity()));
 
     // D-06：页面隐藏转成 pause 命令，保持 phase 和引擎一致。
-    steps.run('lifecycle.pauseOnHidden', () =>
-      lifecycle.onHidden(() => bus.dispatch({ type: 'pause' }, 'system')),
-    );
+    track(lifecycle.onHidden(() => bus.dispatch({ type: 'pause' }, 'system')));
     // D-09：pagehide 时只有同步写入可靠。
-    steps.run('lifecycle.persistOnPageHide', () =>
+    track(
       lifecycle.onPageHide(() => {
         const { progress, positionPx } = engine.getState();
+        // 舞台从未挂载或刚切换稿件时位置是 0 且仍在 idle，这不是用户的阅读位置，写入会覆盖已保存的进度。
+        if (controller.getState().phase === 'idle' && positionPx === 0) return;
         scripts.getState().persistOnPageHide({ progress, positionPx });
       }),
     );
 
-    steps.run('display.viewport', () =>
-      viewport.onChange((value) => display.getState().setViewportClass(value)),
-    );
-    steps.run('display.fullscreen', () =>
-      fullscreen.onChange((mode) => display.getState().setFullscreenMode(mode)),
-    );
-    steps.run('display.wakeLock', () =>
-      wakeLock.onChange((status) => display.getState().setWakeLockStatus(status)),
-    );
-    steps.run('display.promptActive', () =>
+    // 适配器的 onChange 不补发初值，启动时先同步一次。
+    display.getState().setViewportClass(viewport.current);
+    display.getState().setFullscreenMode(fullscreen.mode);
+    display.getState().setWakeLockStatus(wakeLock.status);
+    track(viewport.onChange((value) => display.getState().setViewportClass(value)));
+    track(fullscreen.onChange((mode) => display.getState().setFullscreenMode(mode)));
+    track(wakeLock.onChange((status) => display.getState().setWakeLockStatus(status)));
+    track(
       controller.subscribe((state) => display.getState().setPromptActive(state.mode === 'prompt')),
     );
 
     // 切换稿件时重置播放会话。
-    steps.run('scripts.resetOnSwitch', () =>
+    track(
       scripts.subscribe((state, previous) => {
         if (state.activeScriptId !== previous.activeScriptId) controller.resetSession();
       }),
     );
-    steps.run('scripts.load', () => void scripts.getState().load());
+    void scripts.getState().load();
 
     // E2E 需要读取引擎状态（验收 8-3、8-8、8-11）。生产构建中这段会被移除。
     if (import.meta.env.DEV || import.meta.env.VITE_E2E) {
       (window as unknown as { __WTP_DEBUG__: unknown }).__WTP_DEBUG__ = {
         getScrollState: () => engine.getState(),
         getControllerState: () => controller.getState(),
+        getMetrics: () => engine.getMetrics(),
+        getActiveScript: () => {
+          const { activeScriptId, scripts: list, draft, saveStatus } = scripts.getState();
+          const script = list.find((s) => s.id === activeScriptId);
+          return script ? { ...script, draft, saveStatus } : null;
+        },
+        getSettings: () => settings.getState().settings,
+        getDisplayState: () => {
+          const { fullscreenMode, isClean, controlsVisible } = display.getState();
+          return { fullscreenMode, isClean, controlsVisible };
+        },
       };
     }
 
-    if (steps.unimplemented.length > 0) {
-      console.warn(`[skeleton] 尚未实现的启动步骤：${steps.unimplemented.join(', ')}`);
-    }
-    return steps.disposeAll;
+    return () => {
+      while (cleanups.length > 0) cleanups.pop()?.();
+    };
   };
 
   return {
     stores: { playback, scripts, settings, display, stageBridge },
     start,
-    unimplementedSteps: steps.unimplemented,
   };
 }

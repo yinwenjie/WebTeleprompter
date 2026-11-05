@@ -10,3 +10,8 @@ export function t(key: MessageKey, params?: Record<string, string | number>): st
     name in params ? String(params[name]) : match,
   );
 }
+
+/** 列出某个前缀下的全部键，按词典中的顺序。快捷键表等由词典驱动的列表用它。 */
+export function messageKeysWithPrefix(prefix: string): MessageKey[] {
+  return (Object.keys(zhCN) as MessageKey[]).filter((key) => key.startsWith(prefix));
+}
