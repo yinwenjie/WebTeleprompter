@@ -171,3 +171,19 @@ Node 要求随之提高到 22.22+ 或 24.15+（Vitest 5、jsdom 31）。
 | Q4 虚拟化                     | P0 不做，依赖 8-4                       |
 | Q5–Q8                         | 按原计划延后到 P1 / P2                  |
 | Q9 设置存储                   | 保持 localStorage                       |
+
+## 7. 实现阶段补充
+
+**D-23 接口的增量补充（均为向后兼容的可选参数或新增导出，不改变已有语义）。**
+
+| 位置                                   | 变化                                                           | 原因                                                                  |
+| -------------------------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `core/models` `resolveImportConflicts` | 新增可选参数 `titleSuffix`，默认 `DEFAULT_IMPORT_TITLE_SUFFIX` | 模块文档要求“文案走参数”，core 不依赖 i18n                            |
+| `core/models` `countChars`             | 新增导出                                                       | 编辑区字数与 `charCount` 共用同一规则                                 |
+| `ScriptStoreState.importBundle`        | 文件损坏时以 `StorageError('corrupt')` 拒绝                    | 稿件库需要知道恢复失败以显示错误；`saveStatus` 只表示落库状态，不复用 |
+| `BrowserClock.now`                     | 返回 `Date.now()`                                              | scriptStore 用它生成 `createdAt` / `updatedAt`，必须是 epoch 毫秒     |
+| bootstrap `pagehide`                   | `phase = idle` 且位置为 0 时不写进度暂存                       | 舞台未挂载或刚换稿时引擎位置为 0，写入会覆盖已保存的阅读位置          |
+
+**8-2 验证结果。** 在临时分支用 `BroadcastChannel` 写了 `RemoteTransport` 原型：只新增一个 platform 文件并在 bootstrap 接线，未改 core，即可远程切换模式、调速，非法命令被 `isPlaybackCommand` 拒绝。按 platform-remote 文档的要求，验证后未合并。
+
+**8-4 实测（Chromium，4× CPU 节流，5 档，10 秒）。** 四种组合的 P95 帧率为 59.5–59.9 fps，均达标。未做 Performance trace 的 Layout / Paint 事件检查，也未做真机测试（R-2、R-6 仍需真机确认）。
