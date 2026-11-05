@@ -17,5 +17,9 @@
   "prompter.backToEdit": "返回编辑",
   "settings.title": "设置",
   "library.title": "稿件库",
-  "help.title": "快捷键"
+  "help.title": "快捷键",
+  "sample.title": "欢迎使用 WebTeleprompter",
+  "sample.content": "这是一份示例稿件。你可以直接修改它，或者在稿件库里新建、导入自己的稿件。\n\n点击“开始提词”进入提词模式，按空格开始或暂停，倒计时结束后文字会匀速向上滚动。\n\n按上下方向键调整语速，按 PageUp 和 PageDown 跳到上一段或下一段，按 Home 回到开头。\n\n按 F 进入全屏，按 M 镜像翻转，按 C 切换纯净模式，按问号查看全部快捷键。\n\n手机上可以双击屏幕暂停，用手指拖动来调整位置。\n\n稿件只保存在你的浏览器里，记得定期在稿件库中备份。",
+  "script.untitled": "未命名稿件",
+  "import.titleSuffix": "(导入)"
 }

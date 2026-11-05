@@ -1,5 +1,4 @@
 import { createStore, type StoreApi } from 'zustand/vanilla';
-import { notImplemented } from '@/core/not-implemented';
 import type { Clock } from '@/core/ports/clock';
 import type {
   FullscreenMode,
@@ -50,25 +49,93 @@ export interface DisplayStoreDeps {
 }
 
 /** 规格见 docs/dev/modules/state-display-playback.md */
-export function createDisplayStore(_deps: DisplayStoreDeps): DisplayStore {
-  return createStore<DisplayStoreState>(() => ({
-    fullscreenMode: 'none',
-    isClean: false,
-    controlsVisible: true,
-    viewportClass: 'desktop',
-    wakeLock: 'inactive',
-    presentation: 'normal',
-    activePanel: 'none',
-    helpOpen: false,
-    toggleFullscreen: () => notImplemented('displayStore.toggleFullscreen'),
-    exitFullscreen: () => notImplemented('displayStore.exitFullscreen'),
-    toggleClean: () => notImplemented('displayStore.toggleClean'),
-    toggleHelp: () => notImplemented('displayStore.toggleHelp'),
-    setActivePanel: () => notImplemented('displayStore.setActivePanel'),
-    noteActivity: () => notImplemented('displayStore.noteActivity'),
-    setViewportClass: () => notImplemented('displayStore.setViewportClass'),
-    setFullscreenMode: () => notImplemented('displayStore.setFullscreenMode'),
-    setWakeLockStatus: () => notImplemented('displayStore.setWakeLockStatus'),
-    setPromptActive: () => notImplemented('displayStore.setPromptActive'),
-  }));
+export function createDisplayStore({
+  fullscreen,
+  wakeLock,
+  clock,
+}: DisplayStoreDeps): DisplayStore {
+  let hideTimer: number | null = null;
+  let cleanBeforeFullscreen: boolean | null = null;
+  let promptActive = false;
+
+  return createStore<DisplayStoreState>((set, get) => {
+    const scheduleHide = () => {
+      if (hideTimer !== null) clock.clearTimeout(hideTimer);
+      hideTimer = clock.setTimeout(() => {
+        hideTimer = null;
+        const { activePanel, helpOpen } = get();
+        if (activePanel !== 'none' || helpOpen) return;
+        set({ controlsVisible: false });
+      }, CONTROLS_AUTO_HIDE_MS);
+    };
+
+    const setFullscreenMode = (mode: FullscreenMode) => {
+      if (mode === get().fullscreenMode) return;
+      if (mode === 'none' && cleanBeforeFullscreen !== null) {
+        const isClean = cleanBeforeFullscreen;
+        cleanBeforeFullscreen = null;
+        set({ fullscreenMode: mode, isClean });
+        return;
+      }
+      set({ fullscreenMode: mode });
+    };
+
+    const exitFullscreen = () => {
+      if (get().fullscreenMode === 'none') return;
+      void fullscreen.exit().then(() => setFullscreenMode('none'));
+    };
+
+    return {
+      fullscreenMode: 'none',
+      isClean: false,
+      controlsVisible: true,
+      viewportClass: 'desktop',
+      wakeLock: 'inactive',
+      presentation: 'normal',
+      activePanel: 'none',
+      helpOpen: false,
+      toggleFullscreen: () => {
+        if (get().fullscreenMode !== 'none') {
+          exitFullscreen();
+          return;
+        }
+        cleanBeforeFullscreen ??= get().isClean;
+        set({ isClean: true });
+        // 必须在同一调用栈内同步调用 enter，前面不能有 await（R-5）。
+        void fullscreen.enter().then(setFullscreenMode);
+      },
+      exitFullscreen,
+      toggleClean: () => set({ isClean: !get().isClean }),
+      toggleHelp: () => {
+        const helpOpen = !get().helpOpen;
+        set({ helpOpen });
+        if (!helpOpen && get().controlsVisible) scheduleHide();
+      },
+      setActivePanel: (activePanel) => {
+        if (activePanel === get().activePanel) return;
+        set({ activePanel, controlsVisible: true });
+        if (activePanel === 'none') scheduleHide();
+      },
+      noteActivity: () => {
+        if (!get().controlsVisible) set({ controlsVisible: true });
+        scheduleHide();
+      },
+      setViewportClass: (viewportClass) => {
+        if (viewportClass !== get().viewportClass) set({ viewportClass });
+      },
+      setFullscreenMode,
+      setWakeLockStatus: (status: WakeLockStatus) => {
+        if (status !== get().wakeLock) set({ wakeLock: status });
+      },
+      setPromptActive: (active) => {
+        if (active === promptActive) return;
+        promptActive = active;
+        if (active) {
+          void wakeLock.acquire().then((status) => get().setWakeLockStatus(status));
+        } else {
+          void wakeLock.release().then(() => get().setWakeLockStatus(wakeLock.status));
+        }
+      },
+    };
+  });
 }

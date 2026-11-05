@@ -1,5 +1,4 @@
 import { createStore, type StoreApi } from 'zustand/vanilla';
-import { notImplemented } from '@/core/not-implemented';
 import type { CommandBus } from '@/core/playback/bus';
 import type { CommandSource, PlaybackCommand } from '@/core/playback/commands';
 import type { PlaybackController, PlaybackState } from '@/core/playback/controller';
@@ -28,8 +27,14 @@ export function createPlaybackStore({ bus, controller, engine }: PlaybackStoreDe
 
 /** 把 controller 和 engine 的状态同步进 store，返回取消订阅函数。store 只读镜像，不改位置。 */
 export function connectPlaybackStore(
-  _store: PlaybackStore,
-  _deps: Pick<PlaybackStoreDeps, 'controller' | 'engine'>,
+  store: PlaybackStore,
+  { controller, engine }: Pick<PlaybackStoreDeps, 'controller' | 'engine'>,
 ): () => void {
-  return notImplemented('connectPlaybackStore');
+  store.setState({ ...controller.getState(), scroll: engine.getState() });
+  const offController = controller.subscribe((state) => store.setState({ ...state }));
+  const offEngine = engine.subscribe((scroll) => store.setState({ scroll }));
+  return () => {
+    offController();
+    offEngine();
+  };
 }

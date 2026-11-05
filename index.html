@@ -7,8 +7,37 @@
     <link rel="manifest" href="./manifest.webmanifest" />
     <title>WebTeleprompter</title>
     <script>
-      // TODO(ui-settings)：首屏防闪烁。同步读取 localStorage 的 wtp.settings，把外观变量写到
-      // documentElement，全程 try/catch。详见 docs/dev/modules/state-settings.md。
+      // 首屏防闪烁：与 src/state/settingsStore.ts 的 settingsToCssVars 保持一致（有测试校验）。
+      (function () {
+        try {
+          var s = JSON.parse(localStorage.getItem('wtp.settings'));
+          if (!s || !s.appearance) return;
+          var a = s.appearance;
+          var g = (s.display && s.display.guide) || {};
+          var fonts = {
+            sans: 'system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif',
+            serif: '"Songti SC", "Noto Serif CJK SC", SimSun, serif',
+            mono: 'ui-monospace, "SF Mono", Menlo, Consolas, monospace',
+          };
+          var hex = /^#[0-9a-fA-F]{6}$/;
+          var num = function (v) {
+            return typeof v === 'number' && isFinite(v);
+          };
+          var r = document.documentElement.style;
+          if (num(a.fontSizePx)) r.setProperty('--wtp-font-size', a.fontSizePx + 'px');
+          if (num(a.lineHeight)) r.setProperty('--wtp-line-height', String(a.lineHeight));
+          if (Object.prototype.hasOwnProperty.call(fonts, a.fontFamily))
+            r.setProperty('--wtp-font-family', fonts[a.fontFamily]);
+          if (hex.test(a.fgColor)) r.setProperty('--wtp-fg', a.fgColor);
+          if (hex.test(a.bgColor)) r.setProperty('--wtp-bg', a.bgColor);
+          if (num(a.paddingXPercent)) r.setProperty('--wtp-padding-x', a.paddingXPercent + '%');
+          if (num(g.positionPercent))
+            r.setProperty('--wtp-guide-position', g.positionPercent + '%');
+          if (num(g.opacity)) r.setProperty('--wtp-guide-opacity', String(g.opacity));
+        } catch (e) {
+          // 任何错误都不能阻断页面加载。
+        }
+      })();
     </script>
   </head>
   <body>

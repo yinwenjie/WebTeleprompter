@@ -1,8 +1,9 @@
 import type { Clock } from '@/core/ports/clock';
 
 export class BrowserClock implements Clock {
+  /** epoch ms：scriptStore 用它生成 createdAt / updatedAt，所以不能用 performance.now。 */
   now(): number {
-    return typeof performance !== 'undefined' ? performance.now() : Date.now();
+    return Date.now();
   }
 
   setTimeout(callback: () => void, delayMs: number): number {
