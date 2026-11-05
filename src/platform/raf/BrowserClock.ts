@@ -1,16 +1,15 @@
-import { notImplemented } from '@/core/not-implemented';
 import type { Clock } from '@/core/ports/clock';
 
 export class BrowserClock implements Clock {
   now(): number {
-    return notImplemented('BrowserClock.now');
+    return typeof performance !== 'undefined' ? performance.now() : Date.now();
   }
 
-  setTimeout(_callback: () => void, _delayMs: number): number {
-    return notImplemented('BrowserClock.setTimeout');
+  setTimeout(callback: () => void, delayMs: number): number {
+    return window.setTimeout(callback, delayMs);
   }
 
-  clearTimeout(_handle: number): void {
-    notImplemented('BrowserClock.clearTimeout');
+  clearTimeout(handle: number): void {
+    window.clearTimeout(handle);
   }
 }

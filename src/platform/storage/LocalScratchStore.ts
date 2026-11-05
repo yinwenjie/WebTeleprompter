@@ -1,28 +1,47 @@
-import { notImplemented } from '@/core/not-implemented';
 import type { ProgressPoint, ScratchStore } from '@/core/ports/repositories';
+import { readItem, removeItem, writeItem } from './safeStorage';
+import { lsKeyDraft, lsKeyProgress } from './schema';
+
+function parseProgress(raw: string | null): ProgressPoint | null {
+  if (raw === null) return null;
+  try {
+    const value = JSON.parse(raw) as Partial<ProgressPoint> | null;
+    if (typeof value !== 'object' || value === null) return null;
+    const { progress, positionPx, savedAt } = value;
+    if (
+      ![progress, positionPx, savedAt].every((n) => typeof n === 'number' && Number.isFinite(n))
+    ) {
+      return null;
+    }
+    if (progress! < 0 || progress! > 1 || positionPx! < 0) return null;
+    return { progress: progress!, positionPx: positionPx!, savedAt: savedAt! };
+  } catch {
+    return null;
+  }
+}
 
 export class LocalScratchStore implements ScratchStore {
-  readDraft(_scriptId: string): string | null {
-    return notImplemented('LocalScratchStore.readDraft');
+  readDraft(scriptId: string): string | null {
+    return readItem(lsKeyDraft(scriptId));
   }
 
-  writeDraft(_scriptId: string, _text: string): void {
-    notImplemented('LocalScratchStore.writeDraft');
+  writeDraft(scriptId: string, text: string): void {
+    writeItem(lsKeyDraft(scriptId), text);
   }
 
-  removeDraft(_scriptId: string): void {
-    notImplemented('LocalScratchStore.removeDraft');
+  removeDraft(scriptId: string): void {
+    removeItem(lsKeyDraft(scriptId));
   }
 
-  readProgress(_scriptId: string): ProgressPoint | null {
-    return notImplemented('LocalScratchStore.readProgress');
+  readProgress(scriptId: string): ProgressPoint | null {
+    return parseProgress(readItem(lsKeyProgress(scriptId)));
   }
 
-  writeProgress(_scriptId: string, _point: ProgressPoint): void {
-    notImplemented('LocalScratchStore.writeProgress');
+  writeProgress(scriptId: string, point: ProgressPoint): void {
+    writeItem(lsKeyProgress(scriptId), JSON.stringify(point));
   }
 
-  removeProgress(_scriptId: string): void {
-    notImplemented('LocalScratchStore.removeProgress');
+  removeProgress(scriptId: string): void {
+    removeItem(lsKeyProgress(scriptId));
   }
 }
