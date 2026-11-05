@@ -11,7 +11,7 @@
   max-width: calc(100vw - 16px);
   padding: 6px;
   border-radius: 14px;
-  background: rgba(28, 28, 30, 0.82);
+  background: rgba(28, 28, 30, 0.94);
   color: #f2f2f4;
   transition: opacity 0.25s ease;
   z-index: 10;
