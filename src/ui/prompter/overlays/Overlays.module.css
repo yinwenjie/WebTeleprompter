@@ -1,0 +1,99 @@
+.guide {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--wtp-guide-opacity);
+}
+
+.line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--wtp-guide-position) + var(--wtp-font-size) * var(--wtp-line-height));
+  height: 2px;
+  background: var(--wtp-fg);
+}
+
+.band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--wtp-guide-position);
+  height: calc(var(--wtp-font-size) * var(--wtp-line-height));
+  background: var(--wtp-fg);
+  opacity: 0.35;
+}
+
+/* 用渐变而不是 backdrop-filter：后者代价高。 */
+.maskAbove,
+.maskBelow {
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+
+.maskAbove {
+  top: 0;
+  height: var(--wtp-guide-position);
+  background: linear-gradient(to top, transparent, var(--wtp-bg) 70%);
+}
+
+.maskBelow {
+  top: calc(var(--wtp-guide-position) + var(--wtp-font-size) * var(--wtp-line-height));
+  bottom: 0;
+  background: linear-gradient(to bottom, transparent, var(--wtp-bg) 60%);
+}
+
+.progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 16px;
+  cursor: pointer;
+}
+
+.track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: rgba(128, 128, 128, 0.35);
+}
+
+.thin .track {
+  height: 2px;
+  background: transparent;
+}
+
+.bar {
+  height: 100%;
+  background: var(--wtp-fg);
+  transform-origin: left center;
+}
+
+.times {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  display: flex;
+  gap: 16px;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.countdown {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: min(40vw, 40vh);
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+  text-shadow: 0 0 24px var(--wtp-bg);
+}

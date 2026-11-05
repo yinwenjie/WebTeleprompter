@@ -36,10 +36,42 @@
 }
 
 .content {
+  position: relative;
   will-change: transform;
   font-family: var(--wtp-font-family);
   font-size: var(--wtp-font-size);
   line-height: var(--wtp-line-height);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+/* 段间距用 margin，它算在下一段的 offsetTop 里。 */
+.content > p {
+  margin: 0 0 calc(var(--wtp-font-size) * var(--wtp-line-height) * 0.6);
+}
+
+.content > p:last-child {
+  margin-bottom: 0;
+}
+
+.notice {
+  position: absolute;
+  top: var(--wtp-guide-position);
+  right: max(12px, var(--wtp-padding-x));
+  transform: translateY(-120%);
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(128, 128, 128, 0.35);
+  color: var(--wtp-fg);
+  font-size: 16px;
+  pointer-events: none;
+}
+
+.empty {
+  position: absolute;
+  top: var(--wtp-guide-position);
+  left: var(--wtp-padding-x);
+  right: var(--wtp-padding-x);
+  font-size: 20px;
+  opacity: 0.7;
 }
