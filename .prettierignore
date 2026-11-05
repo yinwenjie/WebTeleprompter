@@ -1,0 +1,8 @@
+dist
+coverage
+playwright-report
+test-results
+package-lock.json
+# 原始规划与架构文档保持原样，修订写在 docs/architecture-review.md
+docs/product-plan.md
+docs/architecture.md

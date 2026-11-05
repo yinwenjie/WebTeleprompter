@@ -1,0 +1,21 @@
+/* 应用外壳（编辑区、面板、控制条）的配色，与提词舞台的用户配色相互独立。 */
+:root {
+  color-scheme: light dark;
+  --chrome-bg: #f7f7f8;
+  --chrome-surface: #ffffff;
+  --chrome-fg: #1c1c1e;
+  --chrome-muted: #6c6c70;
+  --chrome-border: #d8d8dc;
+  --chrome-accent: #0a66d8;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --chrome-bg: #161618;
+    --chrome-surface: #222225;
+    --chrome-fg: #f2f2f4;
+    --chrome-muted: #a0a0a6;
+    --chrome-border: #3a3a3e;
+    --chrome-accent: #6aa9ff;
+  }
+}

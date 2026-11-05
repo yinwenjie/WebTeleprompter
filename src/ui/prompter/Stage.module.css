@@ -1,0 +1,45 @@
+.stage {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--wtp-bg);
+  color: var(--wtp-fg);
+  /* 手势全部由 GestureInput 接管，防止浏览器滚动或缩放。 */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.mirror {
+  position: absolute;
+  inset: 0;
+}
+
+.mirrorX {
+  transform: scaleX(-1);
+}
+
+.mirrorY {
+  transform: scaleY(-1);
+}
+
+.mirrorX.mirrorY {
+  transform: scale(-1, -1);
+}
+
+.anchor {
+  position: absolute;
+  top: var(--wtp-guide-position);
+  left: 0;
+  right: 0;
+  padding: 0 var(--wtp-padding-x);
+}
+
+.content {
+  will-change: transform;
+  font-family: var(--wtp-font-family);
+  font-size: var(--wtp-font-size);
+  line-height: var(--wtp-line-height);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

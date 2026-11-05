@@ -1,0 +1,11 @@
+{
+  // 架构规则 R1 的编译期保证：core 层在没有 DOM / Node 类型的环境下必须能通过类型检查。
+  // 任何对 window、document、setTimeout、console 的引用都会在这里报错。
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2022"],
+    "types": []
+  },
+  "include": ["src/core"],
+  "exclude": ["src/core/**/__tests__", "src/core/**/*.test.ts"]
+}

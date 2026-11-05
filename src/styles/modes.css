@@ -1,0 +1,8 @@
+/*
+ * 显示模式通过 class 切换，引擎对这些变化无感知（架构 §1.1 第 5 条）。
+ * 根节点 class 由 app/rootStyles.ts 写入。规格见 docs/dev/modules/ui-prompter.md
+ */
+
+/* TODO(ui-prompter)：.is-clean 隐藏控件和光标 */
+/* TODO(ui-prompter)：.is-fullscreen-fallback 用 position: fixed 铺满视口（iPhone 降级） */
+/* 镜像 class 只加在舞台的 mirror 节点上，见 ui/prompter/Stage.module.css */

@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="免费、免安装、数据留在本地的网页提词器" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <title>WebTeleprompter</title>
+    <script>
+      // TODO(ui-settings)：首屏防闪烁。同步读取 localStorage 的 wtp.settings，把外观变量写到
+      // documentElement，全程 try/catch。详见 docs/dev/modules/state-settings.md。
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/app/main.tsx"></script>
+  </body>
+</html>

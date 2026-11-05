@@ -1,0 +1,14 @@
+/*
+ * 用户可调的设计变量。默认值与 core/models/settings.ts 的 DEFAULT_SETTINGS 一致，
+ * 运行时由 settingsToCssVars 写到 documentElement。新增变量时两边同步修改。
+ */
+:root {
+  --wtp-font-size: 48px;
+  --wtp-line-height: 1.5;
+  --wtp-font-family: system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --wtp-fg: #ffe600;
+  --wtp-bg: #000000;
+  --wtp-padding-x: 8%;
+  --wtp-guide-position: 33%;
+  --wtp-guide-opacity: 0.4;
+}

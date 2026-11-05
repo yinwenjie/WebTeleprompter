@@ -1,0 +1,21 @@
+{
+  "app.name": "WebTeleprompter",
+  "app.loading": "正在加载…",
+  "error.title": "出错了",
+  "error.description": "你的稿件仍保存在本地，可以先导出备份，再刷新页面。",
+  "error.exportAll": "导出全部数据",
+  "error.reload": "刷新页面",
+  "storage.degraded": "本次数据不会长期保存，请导出备份。",
+  "storage.quota": "存储空间不足，内容未能保存，请导出备份。",
+  "editor.title": "稿件编辑",
+  "editor.placeholder": "在这里粘贴或输入稿件",
+  "editor.start": "开始提词",
+  "editor.overLimit": "稿件超过建议长度（5 万字符），滚动可能不够流畅。",
+  "prompter.title": "提词舞台",
+  "prompter.paused": "已暂停",
+  "prompter.ended": "已结束",
+  "prompter.backToEdit": "返回编辑",
+  "settings.title": "设置",
+  "library.title": "稿件库",
+  "help.title": "快捷键"
+}
