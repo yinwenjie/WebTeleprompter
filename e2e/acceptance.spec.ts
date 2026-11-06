@@ -86,6 +86,8 @@ for (const c of PERF_CASES) {
     browserName,
   }) => {
     test.skip(browserName !== 'chromium', 'CPU 节流只在 Chromium 的 CDP 中可用');
+    // 公共 CI 运行器没有 GPU，还与其他 worker 抢 CPU，单次帧率采样没有参考价值。发版前在本地运行。
+    test.skip(Boolean(process.env.CI), '帧率门禁只在本地运行');
     test.setTimeout(120_000);
     await page.setViewportSize({ width: c.width, height: c.height });
     await openWithScript(page, fiftyThousandChars(c.perSentence));
@@ -203,10 +205,14 @@ test('8-8 拖拽松手 300ms 后恢复播放，拖拽期间无位置回跳', asy
     };
     requestAnimationFrame(loop);
   });
-  await page.mouse.move(400, 600);
+  // 按在舞台中部：不能超出手机视口（iPhone 13 宽 390），也不能落在底部的控制条上。
+  const viewport = page.viewportSize()!;
+  const x = Math.round(viewport.width / 2);
+  const startY = Math.round(viewport.height / 2);
+  await page.mouse.move(x, startY);
   await page.mouse.down();
-  for (let y = 600; y >= 300; y -= 15) {
-    await page.mouse.move(400, y);
+  for (let y = startY; y >= startY - 300; y -= 15) {
+    await page.mouse.move(x, y);
     await page.waitForTimeout(30);
   }
   // 停住再松手，速度低于惯性阈值。
@@ -335,7 +341,8 @@ test('D-09 播放后直接关闭页面，再次打开进度仍在', async ({ pag
   await playFor(page, 1500);
   const progress = (await scroll(page)).progress;
   expect(progress).toBeGreaterThan(0);
-  await page.close({ runBeforeUnload: true });
+  // 不要加 runBeforeUnload：它让 close() 不等页面关闭就返回，新页面会抢在 pagehide 之前打开。
+  await page.close();
   const next = await context.newPage();
   await next.goto('/');
   await next.waitForFunction(() => window.__WTP_DEBUG__?.getActiveScript() !== null);

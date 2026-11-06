@@ -41,6 +41,12 @@ npm run test:e2e
 
 ## 8-4 性能测试
 
+**只在本地运行，发版前手动执行。** CI 中已跳过：公共运行器没有 GPU，还与其他 worker 抢 CPU，曾把正常代码测成 P95 30fps。
+
+```bash
+npx playwright test -g "8-4" --project=chromium
+```
+
 ```ts
 const client = await page.context().newCDPSession(page);
 await client.send('Emulation.setCPUThrottlingRate', { rate: 4 });
