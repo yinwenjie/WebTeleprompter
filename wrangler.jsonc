@@ -1,0 +1,8 @@
+{
+  // 纯静态站点：只有 assets，没有 Worker 脚本。name 必须与 Cloudflare 控制台中的 Worker 名称一致。
+  "name": "webteleprompter",
+  "compatibility_date": "2026-11-05",
+  "assets": {
+    "directory": "./dist",
+  },
+}
